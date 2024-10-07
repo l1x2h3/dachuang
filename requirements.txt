@@ -3,3 +3,5 @@ numpy
 pandas
 matplotlib
 plotly
+streamlit-authenticator 
+mysql-connector-python

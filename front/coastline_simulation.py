@@ -1,5 +1,14 @@
 import numpy as np
 import plotly.graph_objects as go
+from PIL import Image
+
+# 加载图片
+coast_image = Image.open("fig/coast.png")
+island_image = Image.open("fig/island1.png")
+ship_image = Image.open("fig/ship.png")
+
+# 缩放海岸线图片
+coast_image = coast_image.resize((100, 100))
 
 # 模拟地图
 def simulate_map(num_ships, weather, ship_type, speed):
@@ -7,23 +16,12 @@ def simulate_map(num_ships, weather, ship_type, speed):
     map_size = 100
     map_data = np.zeros((map_size, map_size))
 
-    # 生成海岸线
-    for i in range(map_size):
-        for j in range(map_size):
-            if i < 10 or i > 90 or j < 10 or j > 90:
-                map_data[i, j] = 1  # 海岸线用 1 表示
-
     # 生成岛礁
     num_islands = 5
+    islands = []
     for _ in range(num_islands):
         x, y = np.random.randint(10, 90, 2)
-        map_data[x-2:x+2, y-2:y+2] = 2  # 岛礁用 2 表示
-
-    # 生成浅水区
-    num_shallow_areas = 3
-    for _ in range(num_shallow_areas):
-        x, y = np.random.randint(10, 90, 2)
-        map_data[x-5:x+5, y-5:y+5] = 3  # 浅水区用 3 表示
+        islands.append((x, y))
 
     # 初始化船只位置和速度
     positions = np.random.rand(num_ships, 2) * 80 + 10
@@ -55,14 +53,12 @@ def simulate_map(num_ships, weather, ship_type, speed):
             velocities[i] = direction * speed
 
             # 绕开障碍物
-            for j in range(map_size):
-                for k in range(map_size):
-                    if map_data[j, k] in [1, 2, 3]:
-                        obstacle_pos = np.array([j, k])
-                        dist = np.linalg.norm(positions[i] - obstacle_pos)
-                        if dist < 10:  # 假设障碍物距离为10
-                            # 绕开障碍物
-                            velocities[i] += (positions[i] - obstacle_pos) / dist
+            for island in islands:
+                obstacle_pos = np.array(island)
+                dist = np.linalg.norm(positions[i] - obstacle_pos)
+                if dist < 10:  # 假设障碍物距离为10
+                    # 绕开障碍物
+                    velocities[i] += (positions[i] - obstacle_pos) / dist
 
         positions += velocities * dt
 
@@ -75,10 +71,6 @@ def simulate_map(num_ships, weather, ship_type, speed):
                     velocities[i] = -velocities[i]
                     velocities[j] = -velocities[j]
 
-            # 地图障碍物检测
-            if map_data[int(positions[i, 0]), int(positions[i, 1])] in [1, 2, 3]:
-                velocities[i] = -velocities[i]
-
         # 存储轨迹
         trajectories.append(positions.copy())
 
@@ -87,14 +79,48 @@ def simulate_map(num_ships, weather, ship_type, speed):
             if np.linalg.norm(positions[i] - destinations[i]) < 1:
                 end_times[i] = step * dt
 
-    return map_data, np.array(trajectories), destinations, start_times, end_times
+    return map_data, np.array(trajectories), destinations, start_times, end_times, islands
 
 # 绘制地图和船只轨迹
-def plot_map_simulation(map_data, trajectories, destinations, start_times, end_times):
+def plot_map_simulation(map_data, trajectories, destinations, start_times, end_times, islands):
     fig = go.Figure()
 
-    # 添加地图
-    fig.add_trace(go.Heatmap(z=map_data, colorscale='Greys', showscale=False))
+    # 添加海岸线
+    fig.add_layout_image(
+        dict(
+            source=coast_image,
+            xref="x",
+            yref="y",
+            x=0,
+            y=0,
+            sizex=100,
+            sizey=100,
+            xanchor="left",
+            yanchor="bottom",
+            sizing="stretch",
+            opacity=1,
+            layer="below"
+        )
+    )
+
+    # 添加岛礁
+    for island in islands:
+        fig.add_layout_image(
+            dict(
+                source=island_image,
+                xref="x",
+                yref="y",
+                x=island[0],
+                y=island[1],
+                sizex=1,
+                sizey=1,
+                xanchor="center",
+                yanchor="middle",
+                sizing="stretch",
+                opacity=1,
+                layer="below"
+            )
+        )
 
     # 添加船只轨迹
     for i in range(trajectories.shape[1]):
