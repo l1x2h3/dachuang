@@ -10,6 +10,8 @@ import hashlib
 from PIL import Image
 from streamlit_authenticator import Authenticate
 from db_config import db_config
+from box_leaking import main_box_leaking
+from single_step import use_single_step
 
 # 加载图片
 coast_image = Image.open("fig/coast.png")
@@ -96,7 +98,7 @@ st.title("航行模拟器")
 
 # 导航栏
 st.sidebar.title("导航栏")
-page = st.sidebar.selectbox("选择页面", ["注册", "登录", "航行条件分析与碰撞模拟", "地图模拟"])
+page = st.sidebar.selectbox("选择页面", ["注册", "登录", "航行条件分析与碰撞模拟", "地图模拟","漏水检测" , "单步模拟"])
 
 # 背景图片
 
@@ -169,6 +171,12 @@ if 'logged_in' in st.session_state and st.session_state['logged_in']:
 
             fig.update_layout(title="船只轨迹与碰撞模拟", xaxis_title="X坐标", yaxis_title="Y坐标")
             st.plotly_chart(fig)
+
+    elif page == "漏水检测":
+        main_box_leaking()
+
+    elif page == "单步模拟":
+        use_single_step()
 
     elif page == "地图模拟":
         st.title("地图模拟")
