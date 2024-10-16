@@ -137,7 +137,8 @@ elif page == "登录":
         else:
             st.error("登录失败，请检查邮箱和密码")
 
-if 'logged_in' in st.session_state and st.session_state['logged_in']:
+# if 'logged_in' in st.session_state and st.session_state['logged_in']:
+if 1:
     if page == "航行条件分析与碰撞模拟":
         st.title("航行条件分析与碰撞模拟")
 
